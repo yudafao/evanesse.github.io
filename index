@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ascension Star</title>
+
+<style>
+
+body{
+    margin:0;
+    overflow:hidden;
+    background:radial-gradient(ellipse at bottom,#0a0f2a 0%,#000 100%);
+    font-family:system-ui,Arial;
+    color:white;
+}
+
+/* background stars */
+
+.star-bg{
+    position:absolute;
+    width:2px;
+    height:2px;
+    background:white;
+    border-radius:50%;
+    opacity:.8;
+    animation:twinkle 4s infinite alternate;
+}
+
+@keyframes twinkle{
+    from{opacity:.2}
+    to{opacity:1}
+}
+
+/* main star */
+
+#mainStar{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:130px;
+    height:130px;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle,#fff,#88ccff 40%,#4488ff 60%,transparent 70%);
+    border-radius:50%;
+    box-shadow:
+    0 0 30px #88ccff,
+    0 0 80px #4488ff,
+    0 0 160px #2244ff;
+
+    cursor:pointer;
+    transition:.4s;
+}
+
+#mainStar:hover{
+    transform:translate(-50%,-50%) scale(1.12);
+}
+
+/* input area */
+
+#inputBox{
+    position:absolute;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    text-align:center;
+}
+
+textarea{
+
+    width:320px;
+    height:90px;
+
+    background:rgba(10,20,60,.5);
+
+    border:1px solid #4488ff;
+    border-radius:12px;
+
+    color:white;
+    padding:10px;
+
+    resize:none;
+}
+
+textarea:focus{
+    outline:none;
+    box-shadow:0 0 12px #4488ff;
+}
+
+button{
+
+    margin-top:10px;
+    padding:10px 26px;
+
+    border:none;
+    border-radius:25px;
+
+    background:linear-gradient(45deg,#4488ff,#88ccff);
+
+    color:white;
+    font-size:16px;
+
+    cursor:pointer;
+}
+
+button:hover{
+    box-shadow:0 0 14px #88ccff;
+}
+
+/* ascending text */
+
+.note{
+    position:absolute;
+    pointer-events:none;
+    white-space:nowrap;
+    font-size:18px;
+
+    animation:ascend 1.8s forwards ease-in;
+}
+
+@keyframes ascend{
+
+    0%{
+        opacity:1;
+        transform:translate(0,0) scale(1);
+    }
+
+    100%{
+        opacity:0;
+        transform:translate(var(--dx),var(--dy)) scale(.05);
+    }
+
+}
+
+/* expanded star view */
+
+#expandedView{
+
+    position:absolute;
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%,-50%) scale(0);
+
+    width:420px;
+    max-height:420px;
+
+    background:rgba(5,10,40,.96);
+
+    border-radius:20px;
+
+    padding:20px;
+
+    overflow:auto;
+
+    transition:.35s;
+
+    box-shadow:0 0 60px #4488ff;
+}
+
+#expandedView.show{
+    transform:translate(-50%,-50%) scale(1);
+}
+
+.noteItem{
+
+    padding:8px;
+    margin-bottom:8px;
+
+    border-bottom:1px solid rgba(255,255,255,.15);
+
+    opacity:.9;
+}
+
+.noteItem:hover{
+    opacity:1;
+}
+
+.title{
+    text-align:center;
+    margin-bottom:10px;
+    opacity:.8;
+}
+
+</style>
+</head>
+<body>
+
+<div id="mainStar"></div>
+
+<div id="expandedView"></div>
+
+<div id="inputBox">
+
+<textarea id="textInput"
+placeholder="Write a memory, letter, or reflection..."></textarea>
+
+<br>
+
+<button onclick="ascend()">Ascend</button>
+
+</div>
+
+<script>
+
+/* create space background */
+
+for(let i=0;i<250;i++){
+
+    const star=document.createElement("div");
+
+    star.className="star-bg";
+
+    star.style.left=Math.random()*100+"vw";
+    star.style.top=Math.random()*100+"vh";
+
+    star.style.animationDelay=Math.random()*4+"s";
+
+    document.body.appendChild(star);
+}
+
+
+/* load saved notes */
+
+let notes=JSON.parse(localStorage.getItem("ascensionNotes")||"[]");
+
+
+/* ascend function */
+
+function ascend(){
+
+    const input=document.getElementById("textInput");
+
+    const text=input.value.trim();
+
+    if(!text)return;
+
+
+    const note=document.createElement("div");
+
+    note.className="note";
+
+    note.innerText=text;
+
+
+    const inputRect=input.getBoundingClientRect();
+
+    const starRect=document.getElementById("mainStar").getBoundingClientRect();
+
+
+    note.style.left=inputRect.left+inputRect.width/2+"px";
+    note.style.top=inputRect.top+"px";
+
+
+    const dx=(starRect.left+starRect.width/2)-(inputRect.left+inputRect.width/2);
+    const dy=(starRect.top+starRect.height/2)-(inputRect.top);
+
+
+    note.style.setProperty("--dx",dx+"px");
+    note.style.setProperty("--dy",dy+"px");
+
+
+    document.body.appendChild(note);
+
+
+    setTimeout(()=>note.remove(),1800);
+
+
+    notes.push({
+        text:text,
+        time:new Date().toLocaleString()
+    });
+
+
+    localStorage.setItem("ascensionNotes",JSON.stringify(notes));
+
+
+    input.value="";
+}
+
+
+/* expand star view */
+
+let expanded=false;
+
+const star=document.getElementById("mainStar");
+
+const view=document.getElementById("expandedView");
+
+star.onclick=()=>{
+
+    expanded=!expanded;
+
+    if(expanded){
+
+        view.innerHTML="<div class='title'>Your Star</div>";
+
+        notes.slice().reverse().forEach(n=>{
+
+            const div=document.createElement("div");
+
+            div.className="noteItem";
+
+            div.innerHTML=
+            "<div>"+n.text+"</div>"+
+            "<div style='font-size:11px;opacity:.5'>"+n.time+"</div>";
+
+            view.appendChild(div);
+
+        });
+
+        view.classList.add("show");
+
+    }else{
+
+        view.classList.remove("show");
+
+    }
+
+};
+
+</script>
+
+</body>
+</html>
